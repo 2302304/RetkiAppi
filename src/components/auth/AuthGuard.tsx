@@ -5,13 +5,15 @@ import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Card, CardContent } from '@/components/ui/Card';
-import { Mountain, Mail, LogOut } from 'lucide-react';
+import { Mountain, LogOut } from 'lucide-react';
 
 export function AuthGuard({ children }: { children: React.ReactNode }) {
-  const { user, loading, signIn, signOut } = useAuth();
+  const { user, loading, signIn, signUp } = useAuth();
   const [email, setEmail] = useState('');
-  const [sent, setSent] = useState(false);
+  const [password, setPassword] = useState('');
+  const [isRegistering, setIsRegistering] = useState(false);
   const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
   if (loading) {
@@ -26,6 +28,33 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
   }
 
   if (!user) {
+    const handleSubmit = async (e: React.FormEvent) => {
+      e.preventDefault();
+      if (!email || !password) return;
+      setSubmitting(true);
+      setError('');
+      setSuccess('');
+
+      if (isRegistering) {
+        const { error } = await signUp(email, password);
+        setSubmitting(false);
+        if (error) {
+          setError(error.message === 'User already registered'
+            ? 'Tili on jo olemassa. Kirjaudu sisään.'
+            : 'Rekisteröinti epäonnistui. Salasanan tulee olla vähintään 6 merkkiä.');
+        } else {
+          setSuccess('Tili luotu! Voit nyt kirjautua sisään.');
+          setIsRegistering(false);
+        }
+      } else {
+        const { error } = await signIn(email, password);
+        setSubmitting(false);
+        if (error) {
+          setError('Väärä sähköposti tai salasana.');
+        }
+      }
+    };
+
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
         <Card className="w-full max-w-sm mx-4">
@@ -34,58 +63,55 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
               <Mountain size={48} className="mx-auto text-green-700 mb-3" />
               <h1 className="text-xl font-bold text-gray-900">Retkeilysovellus</h1>
               <p className="text-sm text-gray-500 mt-1">
-                Kirjaudu sisään sähköpostilinkillä
+                {isRegistering ? 'Luo uusi tili' : 'Kirjaudu sisään'}
               </p>
             </div>
 
-            {sent ? (
-              <div className="text-center">
-                <Mail size={32} className="mx-auto text-green-600 mb-3" />
-                <p className="text-sm text-gray-700 font-medium">
-                  Tarkista sähköpostisi!
-                </p>
-                <p className="text-xs text-gray-500 mt-1">
-                  Lähetimme kirjautumislinkin osoitteeseen {email}
-                </p>
-                <button
-                  onClick={() => setSent(false)}
-                  className="text-xs text-green-700 hover:underline mt-4"
-                >
-                  Lähetä uudelleen
-                </button>
-              </div>
-            ) : (
-              <form
-                onSubmit={async (e) => {
-                  e.preventDefault();
-                  if (!email) return;
-                  setSubmitting(true);
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <Input
+                id="email"
+                type="email"
+                label="Sähköposti"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="nimi@esimerkki.fi"
+                required
+              />
+              <Input
+                id="password"
+                type="password"
+                label="Salasana"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder={isRegistering ? 'Vähintään 6 merkkiä' : '••••••'}
+                minLength={6}
+                required
+              />
+              {error && <p className="text-xs text-red-600">{error}</p>}
+              {success && <p className="text-xs text-green-600">{success}</p>}
+              <Button type="submit" className="w-full" disabled={submitting}>
+                {submitting
+                  ? 'Odota...'
+                  : isRegistering
+                  ? 'Luo tili'
+                  : 'Kirjaudu sisään'}
+              </Button>
+            </form>
+
+            <div className="text-center mt-4">
+              <button
+                onClick={() => {
+                  setIsRegistering(!isRegistering);
                   setError('');
-                  const { error } = await signIn(email);
-                  setSubmitting(false);
-                  if (error) {
-                    setError('Kirjautuminen epäonnistui. Yritä uudelleen.');
-                  } else {
-                    setSent(true);
-                  }
+                  setSuccess('');
                 }}
-                className="space-y-4"
+                className="text-sm text-green-700 hover:underline"
               >
-                <Input
-                  id="email"
-                  type="email"
-                  label="Sähköposti"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="nimi@esimerkki.fi"
-                  required
-                />
-                {error && <p className="text-xs text-red-600">{error}</p>}
-                <Button type="submit" className="w-full" disabled={submitting}>
-                  {submitting ? 'Lähetetään...' : 'Lähetä kirjautumislinkki'}
-                </Button>
-              </form>
-            )}
+                {isRegistering
+                  ? 'Onko sinulla jo tili? Kirjaudu sisään'
+                  : 'Ei vielä tiliä? Luo uusi'}
+              </button>
+            </div>
           </CardContent>
         </Card>
       </div>
