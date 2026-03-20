@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import { Mountain, Home, BookOpen, ClipboardList } from 'lucide-react';
+import { SignOutButton } from '@/components/auth/AuthGuard';
 
 const navItems = [
   { href: '/', label: 'Etusivu', icon: Home },
@@ -51,6 +52,7 @@ export function Navigation() {
                   </Link>
                 );
               })}
+              <SignOutButton />
             </div>
           </div>
         </div>

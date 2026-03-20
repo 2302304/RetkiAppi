@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import { Geist } from 'next/font/google';
-import { Navigation } from '@/components/layout/Navigation';
+import { AppShell } from '@/components/auth/AppShell';
 import './globals.css';
 
 const geistSans = Geist({
@@ -21,10 +21,7 @@ export default function RootLayout({
   return (
     <html lang="fi">
       <body className={`${geistSans.variable} antialiased bg-gray-50 font-sans`}>
-        <Navigation />
-        <main className="max-w-6xl mx-auto px-4 py-6 pb-24 md:pb-6">
-          {children}
-        </main>
+        <AppShell>{children}</AppShell>
       </body>
     </html>
   );
