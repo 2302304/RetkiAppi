@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { supabase } from '@/lib/supabase';
+import { supabase, FIXED_USER_ID } from '@/lib/supabase';
 import { PackingList, PackingItem, PackingTemplateType, PackingCategory } from '@/types/planning';
 import { PACKING_TEMPLATES } from '@/data/packing-templates';
 
@@ -16,6 +16,7 @@ export function usePackingLists() {
     const { data: listsData } = await supabase
       .from('packing_lists')
       .select('*')
+      .eq('user_id', FIXED_USER_ID)
       .order('updated_at', { ascending: false });
 
     if (!listsData) return;
@@ -23,6 +24,7 @@ export function usePackingLists() {
     const { data: itemsData } = await supabase
       .from('packing_items')
       .select('*')
+      .eq('user_id', FIXED_USER_ID)
       .order('sort_order');
 
     const itemsByList = new Map<string, PackingItem[]>();
@@ -58,25 +60,18 @@ export function usePackingLists() {
 
   const createFromTemplate = useCallback(
     async (templateType: PackingTemplateType, name: string) => {
-      const { data: userData } = await supabase.auth.getUser();
-      if (!userData.user) return '';
-
       const template = PACKING_TEMPLATES.find((t) => t.type === templateType);
 
       const { data: listData, error } = await supabase
         .from('packing_lists')
-        .insert({
-          user_id: userData.user.id,
-          name,
-          template_type: templateType,
-        })
+        .insert({ user_id: FIXED_USER_ID, name, template_type: templateType })
         .select()
         .single();
 
       if (!listData || error) return '';
 
       const items = (template?.items || []).map((item, i) => ({
-        user_id: userData.user!.id,
+        user_id: FIXED_USER_ID,
         list_id: listData.id,
         name: item.name,
         category: item.category,
@@ -122,16 +117,9 @@ export function usePackingLists() {
   );
 
   const createEmpty = useCallback(async (name: string) => {
-    const { data: userData } = await supabase.auth.getUser();
-    if (!userData.user) return '';
-
     const { data, error } = await supabase
       .from('packing_lists')
-      .insert({
-        user_id: userData.user.id,
-        name,
-        template_type: 'custom',
-      })
+      .insert({ user_id: FIXED_USER_ID, name, template_type: 'custom' })
       .select()
       .single();
 
@@ -173,13 +161,10 @@ export function usePackingLists() {
 
   const addItem = useCallback(
     async (listId: string, item: Omit<PackingItem, 'id' | 'checked'>) => {
-      const { data: userData } = await supabase.auth.getUser();
-      if (!userData.user) return;
-
       const { data, error } = await supabase
         .from('packing_items')
         .insert({
-          user_id: userData.user.id,
+          user_id: FIXED_USER_ID,
           list_id: listId,
           name: item.name,
           category: item.category,
@@ -230,7 +215,6 @@ export function usePackingLists() {
       )
     );
 
-    // Find current state to determine new value
     const list = lists.find((l) => l.id === listId);
     const item = list?.items.find((i) => i.id === itemId);
     if (item) {

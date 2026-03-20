@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useMemo, useCallback } from 'react';
-import { supabase } from '@/lib/supabase';
+import { supabase, FIXED_USER_ID } from '@/lib/supabase';
 import { TripEntry, TripPhoto } from '@/types/diary';
 
 export function useTripDiary() {
@@ -15,11 +15,11 @@ export function useTripDiary() {
     const { data: entriesData } = await supabase
       .from('trip_entries')
       .select('*')
+      .eq('user_id', FIXED_USER_ID)
       .order('date', { ascending: false });
 
     if (!entriesData) return;
 
-    // Load photos for all entries
     const entryIds = entriesData.map((e) => e.id);
     const { data: photosData } = await supabase
       .from('trip_photos')
@@ -28,7 +28,6 @@ export function useTripDiary() {
 
     const photosByEntry = new Map<string, TripPhoto[]>();
     for (const row of photosData || []) {
-      // Get signed URL for photo
       const { data: urlData } = await supabase.storage
         .from('trip-photos')
         .createSignedUrl(row.storage_path, 3600);
@@ -73,13 +72,10 @@ export function useTripDiary() {
 
   const addEntry = useCallback(
     async (entry: Omit<TripEntry, 'id' | 'createdAt' | 'updatedAt'>) => {
-      const { data: userData } = await supabase.auth.getUser();
-      if (!userData.user) return '';
-
       const { data, error } = await supabase
         .from('trip_entries')
         .insert({
-          user_id: userData.user.id,
+          user_id: FIXED_USER_ID,
           date: entry.date,
           title: entry.title,
           park_id: entry.parkId,
@@ -103,10 +99,9 @@ export function useTripDiary() {
       for (const photo of entry.photos) {
         if (!photo.dataUrl) continue;
 
-        // Convert base64 to blob
         const response = await fetch(photo.dataUrl);
         const blob = await response.blob();
-        const storagePath = `${userData.user.id}/${data.id}/${crypto.randomUUID()}.jpg`;
+        const storagePath = `${FIXED_USER_ID}/${data.id}/${crypto.randomUUID()}.jpg`;
 
         const { error: uploadError } = await supabase.storage
           .from('trip-photos')
@@ -116,7 +111,7 @@ export function useTripDiary() {
           const { data: photoRow } = await supabase
             .from('trip_photos')
             .insert({
-              user_id: userData.user.id,
+              user_id: FIXED_USER_ID,
               trip_entry_id: data.id,
               storage_path: storagePath,
               caption: photo.caption,
@@ -191,7 +186,6 @@ export function useTripDiary() {
   );
 
   const deleteEntry = useCallback(async (id: string) => {
-    // Delete photos from storage first
     const { data: photos } = await supabase
       .from('trip_photos')
       .select('storage_path')

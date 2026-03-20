@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { supabase } from '@/lib/supabase';
+import { supabase, FIXED_USER_ID } from '@/lib/supabase';
 import { WishlistDestination } from '@/types/planning';
 
 export function useWishlist() {
@@ -15,6 +15,7 @@ export function useWishlist() {
     const { data } = await supabase
       .from('wishlist_destinations')
       .select('*')
+      .eq('user_id', FIXED_USER_ID)
       .order('added_at', { ascending: false });
 
     if (data) {
@@ -36,13 +37,10 @@ export function useWishlist() {
 
   const addDestination = useCallback(
     async (dest: Omit<WishlistDestination, 'id' | 'addedAt'>) => {
-      const { data: userData } = await supabase.auth.getUser();
-      if (!userData.user) return '';
-
       const { data, error } = await supabase
         .from('wishlist_destinations')
         .insert({
-          user_id: userData.user.id,
+          user_id: FIXED_USER_ID,
           name: dest.name,
           park_id: dest.parkId,
           location: dest.location,

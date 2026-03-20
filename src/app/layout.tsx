@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import { Geist } from 'next/font/google';
-import { AppShell } from '@/components/auth/AppShell';
+import { Navigation } from '@/components/layout/Navigation';
 import './globals.css';
 
 const geistSans = Geist({
@@ -10,7 +10,7 @@ const geistSans = Geist({
 
 export const metadata: Metadata = {
   title: 'Retkeilysovellus',
-  description: 'Seuraa retkiäsi, kansallispuistokäyntejäsi ja suunnittele seuraava seikkailu',
+  description: 'Seuraa retkiäsi ja kansallispuistokäyntejäsi',
 };
 
 export default function RootLayout({
@@ -21,7 +21,10 @@ export default function RootLayout({
   return (
     <html lang="fi">
       <body className={`${geistSans.variable} antialiased bg-gray-50 font-sans`}>
-        <AppShell>{children}</AppShell>
+        <Navigation />
+        <main className="max-w-6xl mx-auto px-4 py-6 pb-24 md:pb-6">
+          {children}
+        </main>
       </body>
     </html>
   );

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useMemo, useCallback } from 'react';
-import { supabase } from '@/lib/supabase';
+import { supabase, FIXED_USER_ID } from '@/lib/supabase';
 import { ParkVisit } from '@/types/park';
 import { TOTAL_PARKS } from '@/lib/constants';
 
@@ -16,6 +16,7 @@ export function useParkVisits() {
     const { data } = await supabase
       .from('park_visits')
       .select('*')
+      .eq('user_id', FIXED_USER_ID)
       .order('created_at', { ascending: false });
 
     if (data) {
@@ -42,13 +43,10 @@ export function useParkVisits() {
 
   const addVisit = useCallback(
     async (parkId: string, visitDate: string, notes?: string, rating?: number) => {
-      const { data: userData } = await supabase.auth.getUser();
-      if (!userData.user) return;
-
       const { data, error } = await supabase
         .from('park_visits')
         .insert({
-          user_id: userData.user.id,
+          user_id: FIXED_USER_ID,
           park_id: parkId,
           visit_date: visitDate,
           notes,

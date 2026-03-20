@@ -4,3 +4,6 @@ const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey);
+
+// Fixed user ID for single-user mode (no auth)
+export const FIXED_USER_ID = '00000000-0000-0000-0000-000000000001';
