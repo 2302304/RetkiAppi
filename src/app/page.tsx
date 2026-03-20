@@ -1,65 +1,197 @@
-import Image from "next/image";
+'use client';
 
-export default function Home() {
+import Link from 'next/link';
+import { useParkVisits } from '@/hooks/useParkVisits';
+import { useTripDiary } from '@/hooks/useTripDiary';
+import { useStats } from '@/hooks/useStats';
+import { TOTAL_PARKS } from '@/lib/constants';
+import { formatDuration } from '@/lib/utils';
+import { Card, CardContent } from '@/components/ui/Card';
+import { ProgressBar } from '@/components/ui/ProgressBar';
+import { TripCard } from '@/components/diary/TripCard';
+import { Button } from '@/components/ui/Button';
+import {
+  Mountain,
+  Route,
+  Clock,
+  Star,
+  Plus,
+  Map,
+  BookOpen,
+  ChevronRight,
+  Heart,
+  ClipboardList,
+} from 'lucide-react';
+
+export default function EtusivuPage() {
+  const { visitCount } = useParkVisits();
+  const { entries, entriesByDate } = useTripDiary();
+  const stats = useStats(entries);
+  const recentTrips = entriesByDate.slice(0, 3);
+
   return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex min-h-screen w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
+    <div className="space-y-8">
+      {/* Hero */}
+      <div>
+        <h1 className="text-3xl font-bold text-gray-900 mb-1">
+          Tervetuloa retkeilemään!
+        </h1>
+        <p className="text-gray-500">
+          Seuraa retkiäsi ja kansallispuistokäyntejäsi.
+        </p>
+      </div>
+
+      {/* Kansallispuistot progress */}
+      <Link href="/kansallispuistot">
+        <Card hoverable>
+          <CardContent>
+            <div className="flex items-center gap-3 mb-3">
+              <div className="p-2 bg-green-50 rounded-lg">
+                <Mountain size={24} className="text-green-700" />
+              </div>
+              <div>
+                <h2 className="font-semibold text-gray-900">
+                  Kansallispuistot
+                </h2>
+                <p className="text-sm text-gray-500">
+                  {visitCount} / {TOTAL_PARKS} käyty
+                </p>
+              </div>
+            </div>
+            <ProgressBar
+              value={visitCount}
+              max={TOTAL_PARKS}
+              showPercentage={false}
+              size="md"
             />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+            {visitCount === TOTAL_PARKS ? (
+              <p className="text-green-700 font-medium text-sm mt-2">
+                Kaikki puistot käyty!
+              </p>
+            ) : (
+              <p className="text-xs text-gray-400 mt-2">
+                {TOTAL_PARKS - visitCount} puistoa jäljellä
+              </p>
+            )}
+          </CardContent>
+        </Card>
+      </Link>
+
+      {/* Quick stats */}
+      {stats.totalTrips > 0 && (
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+          <Card>
+            <CardContent className="flex items-center gap-3">
+              <BookOpen size={20} className="text-green-600 shrink-0" />
+              <div>
+                <p className="text-xs text-gray-500">Retkiä</p>
+                <p className="text-lg font-bold">{stats.totalTrips}</p>
+              </div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="flex items-center gap-3">
+              <Route size={20} className="text-blue-600 shrink-0" />
+              <div>
+                <p className="text-xs text-gray-500">Kilometrejä</p>
+                <p className="text-lg font-bold">{stats.totalDistanceKm}</p>
+              </div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="flex items-center gap-3">
+              <Clock size={20} className="text-purple-600 shrink-0" />
+              <div>
+                <p className="text-xs text-gray-500">Luonnossa</p>
+                <p className="text-lg font-bold">
+                  {formatDuration(stats.totalDurationMinutes)}
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="flex items-center gap-3">
+              <Star size={20} className="text-yellow-500 shrink-0" />
+              <div>
+                <p className="text-xs text-gray-500">Keskiarvo</p>
+                <p className="text-lg font-bold">{stats.averageRating} / 5</p>
+              </div>
+            </CardContent>
+          </Card>
         </div>
-      </main>
+      )}
+
+      {/* Recent trips */}
+      <div>
+        <div className="flex items-center justify-between mb-3">
+          <h2 className="text-lg font-semibold text-gray-900">
+            Viimeisimmät retket
+          </h2>
+          <Link
+            href="/paivakirja"
+            className="text-sm text-green-700 hover:underline flex items-center gap-1"
+          >
+            Kaikki <ChevronRight size={14} />
+          </Link>
+        </div>
+        {recentTrips.length === 0 ? (
+          <Card>
+            <CardContent className="text-center py-8">
+              <p className="text-gray-500 text-sm mb-3">
+                Ei vielä retkimerkintöjä.
+              </p>
+              <Link href="/paivakirja/uusi">
+                <Button size="sm">
+                  <Plus size={16} className="mr-1.5" />
+                  Lisää ensimmäinen
+                </Button>
+              </Link>
+            </CardContent>
+          </Card>
+        ) : (
+          <div className="space-y-3">
+            {recentTrips.map((entry) => (
+              <TripCard key={entry.id} entry={entry} />
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Quick actions */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        <Link href="/paivakirja/uusi">
+          <Card hoverable>
+            <CardContent className="text-center py-4">
+              <Plus size={24} className="mx-auto text-green-600 mb-1" />
+              <span className="text-sm font-medium text-gray-700">Uusi merkintä</span>
+            </CardContent>
+          </Card>
+        </Link>
+        <Link href="/kansallispuistot/kartta">
+          <Card hoverable>
+            <CardContent className="text-center py-4">
+              <Map size={24} className="mx-auto text-blue-600 mb-1" />
+              <span className="text-sm font-medium text-gray-700">Karttanäkymä</span>
+            </CardContent>
+          </Card>
+        </Link>
+        <Link href="/suunnittelu/pakkauslistat">
+          <Card hoverable>
+            <CardContent className="text-center py-4">
+              <ClipboardList size={24} className="mx-auto text-orange-600 mb-1" />
+              <span className="text-sm font-medium text-gray-700">Pakkauslistat</span>
+            </CardContent>
+          </Card>
+        </Link>
+        <Link href="/suunnittelu/toivelista">
+          <Card hoverable>
+            <CardContent className="text-center py-4">
+              <Heart size={24} className="mx-auto text-red-500 mb-1" />
+              <span className="text-sm font-medium text-gray-700">Toivelista</span>
+            </CardContent>
+          </Card>
+        </Link>
+      </div>
     </div>
   );
 }
